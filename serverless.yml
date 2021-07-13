@@ -21,8 +21,22 @@ custom:
 
 provider:
   name: aws
+  # memorySize: 1024 # Valor padrão
   runtime: nodejs14.x
   region: sa-east-1
+  iamRoleStatements: # Permissões
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource: "*" # Permissão vale para quais tabelas?
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "*"
+
+# Para que cada função tenha um arquivo zip próprio dentro da pasta serverless
+# package:
+#   individually: true
 
 functions:
   generateCertificate:
@@ -32,6 +46,12 @@ functions:
           path: /generateCertificate
           method: POST
           cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:PutItem
+        Resource: "arn:aws:dynamodb:${self.provider.region}:*:table/users_certificates"
   verifyCertificate:
     handler: src/functions/verifyCertificate.handle
     events:
@@ -39,6 +59,11 @@ functions:
           path: /verifyCertificate/{id}
           method: GET
           cors: true
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: "arn:aws:dynamodb:${self.provider.region}:*:table/users_certificates"
 
 resources:
   Resources:
